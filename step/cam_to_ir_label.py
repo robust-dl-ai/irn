@@ -1,22 +1,20 @@
-
 import os
-import numpy as np
-import imageio
 
+import imageio
+import numpy as np
 from torch import multiprocessing
 from torch.utils.data import DataLoader
 
-import voc12.dataloader
-from misc import torchutils, imutils
+from irn.misc import torchutils, imutils
+from irn.voc12 import dataloader
 
 
 def _work(process_id, infer_dataset, args):
-
     databin = infer_dataset[process_id]
     infer_data_loader = DataLoader(databin, shuffle=False, num_workers=0, pin_memory=False)
 
     for iter, pack in enumerate(infer_data_loader):
-        img_name = voc12.dataloader.decode_int_filename(pack['name'][0])
+        img_name = dataloader.decode_int_filename(pack['name'][0])
         img = pack['img'][0].numpy()
         cam_dict = np.load(os.path.join(args.cam_out_dir, img_name + '.npy'), allow_pickle=True).item()
 
@@ -42,12 +40,13 @@ def _work(process_id, infer_dataset, args):
         imageio.imwrite(os.path.join(args.ir_label_out_dir, img_name + '.png'),
                         conf.astype(np.uint8))
 
-
         if process_id == args.num_workers - 1 and iter % (len(databin) // 20) == 0:
             print("%d " % ((5 * iter + 1) // (len(databin) // 20)), end='')
 
+
 def run(args):
-    dataset = voc12.dataloader.VOC12ImageDataset(args.train_list, voc12_root=args.voc12_root, img_normal=None, to_torch=False)
+    dataset = dataloader.VOC12ImageDataset(args.train_list, voc12_root=args.voc12_root, img_normal=None,
+                                           to_torch=False)
     dataset = torchutils.split_dataset(dataset, args.num_workers)
 
     print('[ ', end='')

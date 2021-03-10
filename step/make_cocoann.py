@@ -1,15 +1,17 @@
-import numpy as np
-import voc12.dataloader
-from torch.utils.data import DataLoader
-from pycococreatortools import pycococreatortools
-import os
 import json
+import os
+
+import numpy as np
+from pycococreatortools import pycococreatortools
+from torch.utils.data import DataLoader
+
+from irn.voc12 import dataloader
 
 VOC2012_JSON_FOLDER = ""
 
-def run(args):
 
-    infer_dataset = voc12.dataloader.VOC12ImageDataset(args.infer_list, voc12_root=args.voc12_root)
+def run(args):
+    infer_dataset = dataloader.VOC12ImageDataset(args.infer_list, voc12_root=args.voc12_root)
 
     infer_data_loader = DataLoader(infer_dataset, shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
@@ -35,7 +37,7 @@ def run(args):
 
         instance_id = 1
 
-        for score, mask, class_id in zip( ann['score'], ann['mask'], ann['class']):
+        for score, mask, class_id in zip(ann['score'], ann['mask'], ann['class']):
             if score < 1e-5:
                 continue
             category_info = {'id': class_id, 'is_crowd': False}
@@ -47,5 +49,3 @@ def run(args):
 
     with open('voc2012_train_custom.json', 'w') as outfile:
         json.dump(coco_output, outfile)
-
-

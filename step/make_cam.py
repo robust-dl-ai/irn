@@ -1,20 +1,20 @@
-import torch
-from torch import multiprocessing, cuda
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
-from torch.backends import cudnn
-
-import numpy as np
 import importlib
 import os
 
-import voc12.dataloader
-from misc import torchutils, imutils
+import numpy as np
+import torch
+import torch.nn.functional as F
+from torch import multiprocessing, cuda
+from torch.backends import cudnn
+from torch.utils.data import DataLoader
+
+from irn.misc import torchutils, imutils
+from irn.voc12 import dataloader
 
 cudnn.enabled = True
 
-def _work(process_id, model, dataset, args):
 
+def _work(process_id, model, dataset, args):
     databin = dataset[process_id]
     n_gpus = torch.cuda.device_count()
     data_loader = DataLoader(databin, shuffle=False, num_workers=args.num_workers // n_gpus, pin_memory=False)
@@ -56,7 +56,7 @@ def _work(process_id, model, dataset, args):
                     {"keys": valid_cat, "cam": strided_cam.cpu(), "high_res": highres_cam.cpu().numpy()})
 
             if process_id == n_gpus - 1 and iter % (len(databin) // 20) == 0:
-                print("%d " % ((5*iter+1)//(len(databin) // 20)), end='')
+                print("%d " % ((5 * iter + 1) // (len(databin) // 20)), end='')
 
 
 def run(args):
@@ -66,8 +66,8 @@ def run(args):
 
     n_gpus = torch.cuda.device_count()
 
-    dataset = voc12.dataloader.VOC12ClassificationDatasetMSF(args.train_list,
-                                                             voc12_root=args.voc12_root, scales=args.cam_scales)
+    dataset = dataloader.VOC12ClassificationDatasetMSF(args.train_list,
+                                                       voc12_root=args.voc12_root, scales=args.cam_scales)
     dataset = torchutils.split_dataset(dataset, n_gpus)
 
     print('[ ', end='')

@@ -1,0 +1,7 @@
+train_list: ${hydra:runtime.cwd}/irn/voc12/dev.txt
+voc12_root: ${hydra:runtime.cwd}/data/raw/VOCdevkit/VOC2012
+num_workers: 0
+cam_out_dir: ${hydra:runtime.cwd}/debug_outpus/irn/results/dev/cam/
+ir_label_out_dir: ${hydra:runtime.cwd}/debug_outpus/irn/results/dev/cam_to_ir/
+conf_fg_thres: 0.30
+conf_bg_thres: 0.05

@@ -1,21 +1,21 @@
-import torch
-from torch import multiprocessing, cuda
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
-from torch.backends import cudnn
-
-import numpy as np
 import importlib
 import os
-import imageio
 
-import voc12.dataloader
-from misc import torchutils, indexing
+import imageio
+import numpy as np
+import torch
+import torch.nn.functional as F
+from torch import multiprocessing, cuda
+from torch.backends import cudnn
+from torch.utils.data import DataLoader
+
+from irn.misc import torchutils, indexing
+from irn.voc12 import dataloader
 
 cudnn.enabled = True
 
-def _work(process_id, model, dataset, args):
 
+def _work(process_id, model, dataset, args):
     n_gpus = torch.cuda.device_count()
     databin = dataset[process_id]
     data_loader = DataLoader(databin,
@@ -26,7 +26,7 @@ def _work(process_id, model, dataset, args):
         model.cuda()
 
         for iter, pack in enumerate(data_loader):
-            img_name = voc12.dataloader.decode_int_filename(pack['name'][0])
+            img_name = dataloader.decode_int_filename(pack['name'][0])
             orig_img_size = np.asarray(pack['size'])
 
             edge, dp = model(pack['img'][0].cuda(non_blocking=True))
@@ -38,9 +38,11 @@ def _work(process_id, model, dataset, args):
 
             cam_downsized_values = cams.cuda()
 
-            rw = indexing.propagate_to_edge(cam_downsized_values, edge, beta=args.beta, exp_times=args.exp_times, radius=5)
+            rw = indexing.propagate_to_edge(cam_downsized_values, edge, beta=args.beta, exp_times=args.exp_times,
+                                            radius=5)
 
-            rw_up = F.interpolate(rw, scale_factor=4, mode='bilinear', align_corners=False)[..., 0, :orig_img_size[0], :orig_img_size[1]]
+            rw_up = F.interpolate(rw, scale_factor=4, mode='bilinear', align_corners=False)[..., 0, :orig_img_size[0],
+                    :orig_img_size[1]]
             rw_up = rw_up / torch.max(rw_up)
 
             rw_up_bg = F.pad(rw_up, (0, 0, 0, 0, 1, 0), value=args.sem_seg_bg_thres)
@@ -51,7 +53,7 @@ def _work(process_id, model, dataset, args):
             imageio.imsave(os.path.join(args.sem_seg_out_dir, img_name + '.png'), rw_pred.astype(np.uint8))
 
             if process_id == n_gpus - 1 and iter % (len(databin) // 20) == 0:
-                print("%d " % ((5*iter+1)//(len(databin) // 20)), end='')
+                print("%d " % ((5 * iter + 1) // (len(databin) // 20)), end='')
 
 
 def run(args):
@@ -61,9 +63,9 @@ def run(args):
 
     n_gpus = torch.cuda.device_count()
 
-    dataset = voc12.dataloader.VOC12ClassificationDatasetMSF(args.infer_list,
-                                                             voc12_root=args.voc12_root,
-                                                             scales=(1.0,))
+    dataset = dataloader.VOC12ClassificationDatasetMSF(args.infer_list,
+                                                       voc12_root=args.voc12_root,
+                                                       scales=(1.0,))
     dataset = torchutils.split_dataset(dataset, n_gpus)
 
     print("[", end='')

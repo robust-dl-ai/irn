@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from misc import pyutils
+from irn.misc import pyutils
 
 if __name__ == '__main__':
 

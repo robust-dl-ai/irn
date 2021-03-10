@@ -1,0 +1,11 @@
+cam_network: irn.net.resnet50_cam
+train_list: ${hydra:runtime.cwd}/irn/voc12/dev.txt
+voc12_root: ${hydra:runtime.cwd}/data/raw/VOCdevkit/VOC2012
+cam_scales:
+  - 1.0
+  - 0.5
+  - 1.5
+  - 2.0
+num_workers: 0
+cam_out_dir: ${hydra:runtime.cwd}/debug_outpus/irn/results/dev/cam/
+cam_weights_name: ${hydra:runtime.cwd}/models/irn/resnet50_cam

@@ -1,6 +1,8 @@
 import argparse
-import voc12.dataloader
+
 import numpy as np
+
+from irn.voc12 import dataloader
 
 if __name__ == '__main__':
 
@@ -11,11 +13,11 @@ if __name__ == '__main__':
     parser.add_argument("--voc12_root", default="../../../Dataset/VOC2012", type=str)
     args = parser.parse_args()
 
-    train_name_list = voc12.dataloader.load_img_name_list(args.train_list)
-    val_name_list = voc12.dataloader.load_img_name_list(args.val_list)
+    train_name_list = dataloader.load_img_name_list(args.train_list)
+    val_name_list = dataloader.load_img_name_list(args.val_list)
 
     train_val_name_list = np.concatenate([train_name_list, val_name_list], axis=0)
-    label_list = voc12.dataloader.load_image_label_list_from_xml(train_val_name_list, args.voc12_root)
+    label_list = dataloader.load_image_label_list_from_xml(train_val_name_list, args.voc12_root)
 
     total_label = np.zeros(20)
 

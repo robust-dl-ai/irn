@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from misc import torchutils
-from net import resnet50
+from irn.misc import torchutils
+from irn.net import resnet50
 
 
 class Net(nn.Module):
@@ -53,7 +53,6 @@ class CAM(Net):
         super(CAM, self).__init__()
 
     def forward(self, x):
-
         x = self.stage1(x)
 
         x = self.stage2(x)

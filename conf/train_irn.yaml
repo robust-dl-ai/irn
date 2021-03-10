@@ -1,0 +1,12 @@
+irn_crop_size: 512
+irn_network: irn.net.resnet50_irn
+train_list: ${hydra:runtime.cwd}/irn/voc12/dev.txt
+ir_label_out_dir: ${hydra:runtime.cwd}/debug_outpus/irn/results/dev/cam_to_ir/
+voc12_root: ${hydra:runtime.cwd}/data/raw/VOCdevkit/VOC2012
+irn_batch_size: 2
+num_workers: 0
+irn_learning_rate: 0.1
+irn_weight_decay: 1e-4
+irn_num_epoches: 1
+irn_weights_name: resnet50_irn
+infer_list: ${hydra:runtime.cwd}/irn/voc12/dev.txt

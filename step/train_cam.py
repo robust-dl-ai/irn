@@ -1,14 +1,14 @@
-
 import torch
 from torch.backends import cudnn
+
 cudnn.enabled = True
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
 import importlib
 
-import voc12.dataloader
-from misc import pyutils, torchutils
+from irn.voc12 import dataloader
+from irn.misc import pyutils, torchutils
 
 
 def validate(model, data_loader):
@@ -37,26 +37,24 @@ def validate(model, data_loader):
 
 
 def run(args):
-
     model = getattr(importlib.import_module(args.cam_network), 'Net')()
 
-
-    train_dataset = voc12.dataloader.VOC12ClassificationDataset(args.train_list, voc12_root=args.voc12_root,
-                                                                resize_long=(320, 640), hor_flip=True,
-                                                                crop_size=512, crop_method="random")
+    train_dataset = dataloader.VOC12ClassificationDataset(args.train_list, voc12_root=args.voc12_root,
+                                                          resize_long=(320, 640), hor_flip=True,
+                                                          crop_size=512, crop_method="random")
     train_data_loader = DataLoader(train_dataset, batch_size=args.cam_batch_size,
                                    shuffle=True, num_workers=args.num_workers, pin_memory=True, drop_last=True)
     max_step = (len(train_dataset) // args.cam_batch_size) * args.cam_num_epoches
 
-    val_dataset = voc12.dataloader.VOC12ClassificationDataset(args.val_list, voc12_root=args.voc12_root,
-                                                              crop_size=512)
+    val_dataset = dataloader.VOC12ClassificationDataset(args.val_list, voc12_root=args.voc12_root,
+                                                        crop_size=512)
     val_data_loader = DataLoader(val_dataset, batch_size=args.cam_batch_size,
                                  shuffle=False, num_workers=args.num_workers, pin_memory=True, drop_last=True)
 
     param_groups = model.trainable_parameters()
     optimizer = torchutils.PolyOptimizer([
         {'params': param_groups[0], 'lr': args.cam_learning_rate, 'weight_decay': args.cam_weight_decay},
-        {'params': param_groups[1], 'lr': 10*args.cam_learning_rate, 'weight_decay': args.cam_weight_decay},
+        {'params': param_groups[1], 'lr': 10 * args.cam_learning_rate, 'weight_decay': args.cam_weight_decay},
     ], lr=args.cam_learning_rate, weight_decay=args.cam_weight_decay, max_step=max_step)
 
     model = torch.nn.DataParallel(model).cuda()
@@ -68,7 +66,7 @@ def run(args):
 
     for ep in range(args.cam_num_epoches):
 
-        print('Epoch %d/%d' % (ep+1, args.cam_num_epoches))
+        print('Epoch %d/%d' % (ep + 1, args.cam_num_epoches))
 
         for step, pack in enumerate(train_data_loader):
 
@@ -84,7 +82,7 @@ def run(args):
             loss.backward()
             optimizer.step()
 
-            if (optimizer.global_step-1)%100 == 0:
+            if (optimizer.global_step - 1) % 100 == 0:
                 timer.update_progress(optimizer.global_step / max_step)
 
                 print('step:%5d/%5d' % (optimizer.global_step - 1, max_step),

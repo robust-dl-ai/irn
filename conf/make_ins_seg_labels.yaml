@@ -1,0 +1,10 @@
+irn_network: irn.net.resnet50_irn
+infer_list: ${hydra:runtime.cwd}/irn/voc12/dev.txt
+voc12_root: ${hydra:runtime.cwd}/data/raw/VOCdevkit/VOC2012
+num_workers: 0
+cam_out_dir: ${hydra:runtime.cwd}/debug_outpus/irn/results/dev/cam/
+irn_weights_name: ${hydra:runtime.cwd}/models/irn/resnet50_irn.pth
+ins_seg_out_dir: ${hydra:runtime.cwd}/debug_outpus/irn/results/dev/ins_seg/
+beta: 10
+exp_times: 8
+ins_seg_bg_thres: 0.25

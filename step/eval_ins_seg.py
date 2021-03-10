@@ -1,9 +1,9 @@
-
-import numpy as np
 import os
 
 import chainercv
+import numpy as np
 from chainercv.datasets import VOCInstanceSegmentationDataset
+
 
 def run(args):
     dataset = VOCInstanceSegmentationDataset(split=args.chainer_eval_set, data_dir=args.voc12_root)
@@ -20,4 +20,4 @@ def run(args):
         pred_score.append(ins_out['score'])
 
     print('0.5iou:', chainercv.evaluations.eval_instance_segmentation_voc(pred_mask, pred_class, pred_score,
-                                                         gt_masks, gt_labels, iou_thresh=0.5))
+                                                                          gt_masks, gt_labels, iou_thresh=0.5))

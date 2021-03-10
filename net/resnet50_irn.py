@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from net import resnet50
+
+from irn.net import resnet50
 
 
 class Net(nn.Module):
@@ -93,8 +94,10 @@ class Net(nn.Module):
         )
 
         self.backbone = nn.ModuleList([self.stage1, self.stage2, self.stage3, self.stage4, self.stage5])
-        self.edge_layers = nn.ModuleList([self.fc_edge1, self.fc_edge2, self.fc_edge3, self.fc_edge4, self.fc_edge5, self.fc_edge6])
-        self.dp_layers = nn.ModuleList([self.fc_dp1, self.fc_dp2, self.fc_dp3, self.fc_dp4, self.fc_dp5, self.fc_dp6, self.fc_dp7])
+        self.edge_layers = nn.ModuleList(
+            [self.fc_edge1, self.fc_edge2, self.fc_edge3, self.fc_edge4, self.fc_edge5, self.fc_edge6])
+        self.dp_layers = nn.ModuleList(
+            [self.fc_dp1, self.fc_dp2, self.fc_dp3, self.fc_dp4, self.fc_dp5, self.fc_dp6, self.fc_dp7])
 
     class MeanShift(nn.Module):
 
@@ -142,7 +145,6 @@ class Net(nn.Module):
 
 
 class AffinityDisplacementLoss(Net):
-
     path_indices_prefix = "path_indices"
 
     def __init__(self, path_index):
@@ -184,7 +186,7 @@ class AffinityDisplacementLoss(Net):
         disp_src = disp[:, :, :cropped_height, radius_floor:radius_floor + cropped_width]
 
         disp_dst = [disp[:, :, dy:dy + cropped_height, radius_floor + dx:radius_floor + dx + cropped_width]
-                       for dy, dx in self.path_index.search_dst]
+                    for dy, dx in self.path_index.search_dst]
         disp_dst = torch.stack(disp_dst, 2)
 
         pair_disp = torch.unsqueeze(disp_src, 2) - disp_dst
@@ -221,16 +223,14 @@ class EdgeDisplacement(Net):
         self.stride = stride
 
     def forward(self, x):
-        feat_size = (x.size(2)-1)//self.stride+1, (x.size(3)-1)//self.stride+1
+        feat_size = (x.size(2) - 1) // self.stride + 1, (x.size(3) - 1) // self.stride + 1
 
-        x = F.pad(x, [0, self.crop_size-x.size(3), 0, self.crop_size-x.size(2)])
+        x = F.pad(x, [0, self.crop_size - x.size(3), 0, self.crop_size - x.size(2)])
         edge_out, dp_out = super().forward(x)
         edge_out = edge_out[..., :feat_size[0], :feat_size[1]]
         dp_out = dp_out[..., :feat_size[0], :feat_size[1]]
 
-        edge_out = torch.sigmoid(edge_out[0]/2 + edge_out[1].flip(-1)/2)
+        edge_out = torch.sigmoid(edge_out[0] / 2 + edge_out[1].flip(-1) / 2)
         dp_out = dp_out[0]
 
         return edge_out, dp_out
-
-

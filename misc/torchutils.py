@@ -1,9 +1,8 @@
-
-import torch
-
-from torch.utils.data import Subset
-import numpy as np
 import math
+
+import numpy as np
+import torch
+from torch.utils.data import Subset
 
 
 class PolyOptimizer(torch.optim.SGD):
@@ -17,7 +16,6 @@ class PolyOptimizer(torch.optim.SGD):
 
         self.__initial_lr = [group['lr'] for group in self.param_groups]
 
-
     def step(self, closure=None):
 
         if self.global_step < self.max_step:
@@ -29,6 +27,7 @@ class PolyOptimizer(torch.optim.SGD):
         super().step(closure)
 
         self.global_step += 1
+
 
 class SGDROptimizer(torch.optim.SGD):
 
@@ -44,7 +43,6 @@ class SGDROptimizer(torch.optim.SGD):
 
         self.__initial_lr = [group['lr'] for group in self.param_groups]
 
-
     def step(self, closure=None):
 
         if self.local_step >= self.max_step:
@@ -52,7 +50,7 @@ class SGDROptimizer(torch.optim.SGD):
             self.max_step *= self.restart_mult
             self.total_restart += 1
 
-        lr_mult = (1 + math.cos(math.pi * self.local_step / self.max_step))/2 / (self.total_restart + 1)
+        lr_mult = (1 + math.cos(math.pi * self.local_step / self.max_step)) / 2 / (self.total_restart + 1)
 
         for i in range(len(self.param_groups)):
             self.param_groups[i]['lr'] = self.__initial_lr[i] * lr_mult
@@ -64,7 +62,6 @@ class SGDROptimizer(torch.optim.SGD):
 
 
 def split_dataset(dataset, n_splits):
-
     return [Subset(dataset, np.arange(i, len(dataset), n_splits)) for i in range(n_splits)]
 
 

@@ -1,18 +1,17 @@
 import importlib
 import os
 
+import hydra
 import numpy as np
-import skimage
 import torch
 import torch.nn.functional as F
-from torch import multiprocessing, cuda
-from torch.backends import cudnn
+from omegaconf import DictConfig
+from skimage import measure
 from torch.utils.data import DataLoader
 
-from irn.misc import torchutils, imutils, pyutils, indexing
+from irn.misc import imutils, pyutils
+from irn.misc import indexing
 from irn.voc12 import dataloader
-
-cudnn.enabled = True
 
 
 def find_centroids_with_refinement(displacement, iterations=300):
@@ -63,7 +62,7 @@ def cluster_centroids(centroids, displacement, thres=2.5):
 
     weak_dp_region = dp_strength < thres
 
-    dp_label = skimage.measure.label(weak_dp_region, connectivity=1, background=0)
+    dp_label = measure.label(weak_dp_region, connectivity=1, background=0)
     dp_label_1d = dp_label.reshape(-1)
 
     centroids_1d = centroids[0] * width + centroids[1]
@@ -77,7 +76,7 @@ def cluster_centroids(centroids, displacement, thres=2.5):
 
 def separte_score_by_mask(scores, masks):
     instacne_map_expanded = torch.from_numpy(np.expand_dims(masks, 0).astype(np.float32))
-    instance_score = torch.unsqueeze(scores, 1) * instacne_map_expanded.cuda()
+    instance_score = torch.unsqueeze(scores, 1) * instacne_map_expanded
     return instance_score
 
 
@@ -91,7 +90,7 @@ def detect_instance(score_map, mask, class_id, max_fragment_size=0):
     for ag_score, ag_mask, ag_class in zip(score_map, mask, class_id):
         if np.sum(ag_mask) < 1:
             continue
-        segments = pyutils.to_one_hot(skimage.measure.label(ag_mask, connectivity=1, background=0))[1:]
+        segments = pyutils.to_one_hot(measure.label(ag_mask, connectivity=1, background=0))[1:]
         # connected components analysis
 
         for seg_mask in segments:
@@ -107,38 +106,43 @@ def detect_instance(score_map, mask, class_id, max_fragment_size=0):
             'class': np.stack(pred_label, 0)}
 
 
-def _work(process_id, model, dataset, args):
-    n_gpus = torch.cuda.device_count()
-    databin = dataset[process_id]
-    data_loader = DataLoader(databin, shuffle=False, num_workers=args.num_workers // n_gpus, pin_memory=False)
+@hydra.main(config_path='../conf', config_name="make_ins_seg_labels")
+def run_app(cfg: DictConfig) -> None:
+    os.makedirs(cfg.ins_seg_out_dir, exist_ok=True)
+    model = getattr(importlib.import_module(cfg.irn_network), 'EdgeDisplacement')()
+    model.load_state_dict(torch.load(cfg.irn_weights_name), strict=False)
+    model.eval()
 
-    with torch.no_grad(), cuda.device(process_id):
+    dataset = dataloader.VOC12ClassificationDatasetMSF(cfg.infer_list,
+                                                       voc12_root=cfg.voc12_root,
+                                                       scales=(1.0,))
 
-        model.cuda()
+    data_loader = DataLoader(dataset, shuffle=False, num_workers=cfg.num_workers, pin_memory=False)
 
+    with torch.no_grad():
         for iter, pack in enumerate(data_loader):
             img_name = pack['name'][0]
             size = np.asarray(pack['size'])
 
-            edge, dp = model(pack['img'][0].cuda(non_blocking=True))
+            edge, dp = model(pack['img'][0])
 
             dp = dp.cpu().numpy()
 
-            cam_dict = np.load(args.cam_out_dir + '/' + img_name + '.npy', allow_pickle=True).item()
+            cam_dict = np.load(cfg.cam_out_dir + '/' + img_name + '.npy', allow_pickle=True).item()
 
-            cams = cam_dict['cam'].cuda()
+            cams = cam_dict['cam']
             keys = cam_dict['keys']
 
             centroids = find_centroids_with_refinement(dp)
             instance_map = cluster_centroids(centroids, dp)
             instance_cam = separte_score_by_mask(cams, instance_map)
 
-            rw = indexing.propagate_to_edge(instance_cam, edge, beta=args.beta, exp_times=args.exp_times, radius=5)
+            rw = indexing.propagate_to_edge(instance_cam, edge, beta=cfg.beta, exp_times=cfg.exp_times, radius=5)
 
             rw_up = F.interpolate(rw, scale_factor=4, mode='bilinear', align_corners=False)[:, 0, :size[0], :size[1]]
             rw_up = rw_up / torch.max(rw_up)
 
-            rw_up_bg = F.pad(rw_up, (0, 0, 0, 0, 1, 0), value=args.ins_seg_bg_thres)
+            rw_up_bg = F.pad(rw_up, (0, 0, 0, 0, 1, 0), value=cfg.ins_seg_bg_thres)
 
             num_classes = len(keys)
             num_instances = instance_map.shape[0]
@@ -150,24 +154,8 @@ def _work(process_id, model, dataset, args):
             detected = detect_instance(rw_up.cpu().numpy(), instance_shape, instance_class_id,
                                        max_fragment_size=size[0] * size[1] * 0.01)
 
-            np.save(os.path.join(args.ins_seg_out_dir, img_name + '.npy'), detected)
-
-            if process_id == n_gpus - 1 and iter % (len(databin) // 20) == 0:
-                print("%d " % ((5 * iter + 1) // (len(databin) // 20)), end='')
+            np.save(os.path.join(cfg.ins_seg_out_dir, img_name + '.npy'), detected)
 
 
-def run(args):
-    model = getattr(importlib.import_module(args.irn_network), 'EdgeDisplacement')()
-    model.load_state_dict(torch.load(args.irn_weights_name), strict=False)
-    model.eval()
-
-    n_gpus = torch.cuda.device_count()
-
-    dataset = dataloader.VOC12ClassificationDatasetMSF(args.infer_list,
-                                                       voc12_root=args.voc12_root,
-                                                       scales=(1.0,))
-    dataset = torchutils.split_dataset(dataset, n_gpus)
-
-    print("[ ", end='')
-    multiprocessing.spawn(_work, nprocs=n_gpus, args=(model, dataset, args), join=True)
-    print("]")
+if __name__ == "__main__":
+    run_app()

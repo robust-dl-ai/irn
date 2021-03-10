@@ -1,9 +1,10 @@
-
-import numpy as np
 import os
+
+import imageio
+import numpy as np
 from chainercv.datasets import VOCSemanticSegmentationDataset
 from chainercv.evaluations import calc_semantic_segmentation_confusion
-import imageio
+
 
 def run(args):
     dataset = VOCSemanticSegmentationDataset(split=args.chainer_eval_set, data_dir=args.voc12_root)

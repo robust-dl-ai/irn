@@ -1,6 +1,6 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
 
 
 class PathIndex:
@@ -83,20 +83,20 @@ class PathIndex:
             path_indices.append(np.array(path_indices_list))
 
         src_indices = np.reshape(full_indices[:cropped_height, self.radius_floor:self.radius_floor + cropped_width], -1)
-        dst_indices = np.concatenate([p[:,0] for p in path_indices], axis=0)
+        dst_indices = np.concatenate([p[:, 0] for p in path_indices], axis=0)
 
         return path_indices, src_indices, dst_indices
 
 
 def edge_to_affinity(edge, paths_indices):
-
     aff_list = []
     edge = edge.view(edge.size(0), -1)
 
     for i in range(len(paths_indices)):
         if isinstance(paths_indices[i], np.ndarray):
             paths_indices[i] = torch.from_numpy(paths_indices[i])
-        paths_indices[i] = paths_indices[i].cuda(non_blocking=True)
+        if torch.cuda.is_available():
+            paths_indices[i] = paths_indices[i].cuda(non_blocking=True)
 
     for ind in paths_indices:
         ind_flat = ind.view(-1)
@@ -110,7 +110,6 @@ def edge_to_affinity(edge, paths_indices):
 
 
 def affinity_sparse2dense(affinity_sparse, ind_from, ind_to, n_vertices):
-
     ind_from = torch.from_numpy(ind_from)
     ind_to = torch.from_numpy(ind_to)
 
@@ -124,8 +123,10 @@ def affinity_sparse2dense(affinity_sparse, ind_from, ind_to, n_vertices):
     indices_id = torch.stack([torch.arange(0, n_vertices).long(), torch.arange(0, n_vertices).long()])
 
     affinity_dense = torch.sparse.FloatTensor(torch.cat([indices, indices_id, indices_tp], dim=1),
-                                       torch.cat([affinity_sparse, torch.ones([n_vertices]), affinity_sparse])).to_dense().cuda()
-
+                                              torch.cat([affinity_sparse, torch.ones([n_vertices]),
+                                                         affinity_sparse])).to_dense()
+    if torch.cuda.is_available():
+        affinity_dense = affinity_dense.cuda()
     return affinity_dense
 
 
@@ -138,12 +139,12 @@ def to_transition_matrix(affinity_dense, beta, times):
 
     return trans_mat
 
-def propagate_to_edge(x, edge, radius=5, beta=10, exp_times=8):
 
+def propagate_to_edge(x, edge, radius=5, beta=10, exp_times=8):
     height, width = x.shape[-2:]
 
-    hor_padded = width+radius*2
-    ver_padded = height+radius
+    hor_padded = width + radius * 2
+    ver_padded = height + radius
 
     path_index = PathIndex(radius=radius, default_size=(ver_padded, hor_padded))
 

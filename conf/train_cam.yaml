@@ -1,0 +1,14 @@
+cam_network: irn.net.resnet50_cam
+voc12_root: ${hydra:runtime.cwd}/data/raw/VOCdevkit/VOC2012
+train_list: ${hydra:runtime.cwd}/irn/voc12/dev.txt
+val_list: ${hydra:runtime.cwd}/irn/voc12/dev.txt
+cls_label_path: ${hydra:runtime.cwd}/irn/voc12/cls_labels.npy
+cam_batch_size: 2
+num_workers: 0
+cam_num_epoches: 1
+cam_learning_rate: 0.1
+cam_weights_name: resnet50_cam
+cam_weight_decay: 5e-4
+weights: ${hydra:runtime.cwd}/models/irn/resnet50_cam.pth
+
+

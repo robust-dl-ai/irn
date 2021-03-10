@@ -1,7 +1,8 @@
+import sys
+import time
 
 import numpy as np
-import time
-import sys
+
 
 class Logger(object):
     def __init__(self, outfile):
@@ -48,7 +49,7 @@ class AverageMeter:
 
 
 class Timer:
-    def __init__(self, starting_msg = None):
+    def __init__(self, starting_msg=None):
         self.start = time.time()
         self.stage_start = self.start
 
@@ -67,7 +68,6 @@ class Timer:
         self.est_remaining = self.est_total - self.elapsed
         self.est_finish = int(self.start + self.est_total)
 
-
     def str_estimated_complete(self):
         return str(time.ctime(self.est_finish))
 
@@ -84,7 +84,6 @@ class Timer:
 
 
 def to_one_hot(sparse_integers, maximum_val=None, dtype=np.bool):
-
     if maximum_val is None:
         maximum_val = np.max(sparse_integers) + 1
 
