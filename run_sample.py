@@ -13,15 +13,15 @@ if __name__ == '__main__':
                         help="Path to VOC 2012 Devkit, must contain ./JPEGImages as subdirectory.")
 
     # Dataset
-    parser.add_argument("--train_list", default="voc12/train_aug.txt", type=str)
-    parser.add_argument("--val_list", default="voc12/val.txt", type=str)
-    parser.add_argument("--infer_list", default="voc12/train.txt", type=str,
-                        help="voc12/train_aug.txt to train a fully supervised model, "
+    parser.add_argument("--train_list", default="irn/voc12/train_aug.txt", type=str)
+    parser.add_argument("--val_list", default="irn/voc12/val.txt", type=str)
+    parser.add_argument("--infer_list", default="irn/voc12/train.txt", type=str,
+                        help="irn/voc12/train_aug.txt to train a fully supervised model, "
                              "voc12/train.txt or voc12/val.txt to quickly check the quality of the labels.")
     parser.add_argument("--chainer_eval_set", default="train", type=str)
 
     # Class Activation Map
-    parser.add_argument("--cam_network", default="net.resnet50_cam", type=str)
+    parser.add_argument("--cam_network", default="irn.net.resnet50_cam", type=str)
     parser.add_argument("--cam_crop_size", default=512, type=int)
     parser.add_argument("--cam_batch_size", default=16, type=int)
     parser.add_argument("--cam_num_epoches", default=5, type=int)
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument("--conf_bg_thres", default=0.05, type=float)
 
     # Inter-pixel Relation Network (IRNet)
-    parser.add_argument("--irn_network", default="net.resnet50_irn", type=str)
+    parser.add_argument("--irn_network", default="irn.net.resnet50_irn", type=str)
     parser.add_argument("--irn_crop_size", default=512, type=int)
     parser.add_argument("--irn_batch_size", default=32, type=int)
     parser.add_argument("--irn_num_epoches", default=3, type=int)
@@ -83,56 +83,56 @@ if __name__ == '__main__':
     print(vars(args))
 
     if args.train_cam_pass is True:
-        import step.train_cam
+        from irn.step import train_cam
 
         timer = pyutils.Timer('step.train_cam:')
-        step.train_cam.run(args)
+        train_cam.run(args)
 
     if args.make_cam_pass is True:
-        import step.make_cam
+        from irn.step  import make_cam
 
         timer = pyutils.Timer('step.make_cam:')
-        step.make_cam.run(args)
+        make_cam.run(args)
 
     if args.eval_cam_pass is True:
-        import step.eval_cam
+        from irn.step import eval_cam
 
         timer = pyutils.Timer('step.eval_cam:')
-        step.eval_cam.run(args)
+        eval_cam.run(args)
 
     if args.cam_to_ir_label_pass is True:
-        import step.cam_to_ir_label
+        from irn.step import cam_to_ir_label
 
         timer = pyutils.Timer('step.cam_to_ir_label:')
-        step.cam_to_ir_label.run(args)
+        cam_to_ir_label.run(args)
 
     if args.train_irn_pass is True:
-        import step.train_irn
+        from irn.step import train_irn
 
         timer = pyutils.Timer('step.train_irn:')
-        step.train_irn.run(args)
+        train_irn.run(args)
 
     if args.make_ins_seg_pass is True:
-        import step.make_ins_seg_labels
+        from irn.step import make_ins_seg_labels
 
         timer = pyutils.Timer('step.make_ins_seg_labels:')
-        step.make_ins_seg_labels.run(args)
+        make_ins_seg_labels.run(args)
 
     if args.eval_ins_seg_pass is True:
-        import step.eval_ins_seg
+        from irn.step import eval_ins_seg
 
         timer = pyutils.Timer('step.eval_ins_seg:')
-        step.eval_ins_seg.run(args)
+        eval_ins_seg.run(args)
 
     if args.make_sem_seg_pass is True:
-        import step.make_sem_seg_labels
+        from irn.step import make_sem_seg_labels
 
         timer = pyutils.Timer('step.make_sem_seg_labels:')
-        step.make_sem_seg_labels.run(args)
+        make_sem_seg_labels.run(args)
 
     if args.eval_sem_seg_pass is True:
-        import step.eval_sem_seg
+        from irn.step import eval_sem_seg
 
         timer = pyutils.Timer('step.eval_sem_seg:')
-        step.eval_sem_seg.run(args)
+        eval_sem_seg.run(args)
 

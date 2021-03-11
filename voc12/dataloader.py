@@ -1,4 +1,5 @@
 import os.path
+import pathlib
 
 import imageio
 import numpy as np
@@ -22,7 +23,8 @@ N_CAT = len(CAT_LIST)
 
 CAT_NAME_TO_NUM = dict(zip(CAT_LIST, range(len(CAT_LIST))))
 
-cls_labels_dict = np.load('irn/voc12/cls_labels.npy', allow_pickle=True).item()
+cls_labels_dict = np.load(f'{os.path.dirname(pathlib.Path(__file__).absolute())}/cls_labels.npy',
+                          allow_pickle=True).item()
 
 
 def decode_int_filename(int_filename):
