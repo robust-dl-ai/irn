@@ -15,7 +15,7 @@ from irn.voc12 import dataloader
 @hydra.main(config_path='../conf', config_name="make_cam")
 def run_app(cfg: DictConfig) -> None:
     model = getattr(importlib.import_module(cfg.cam_network), 'CAM')()
-    model.load_state_dict(torch.load(cfg.cam_weights_name + '.pth'), strict=True)
+    model.load_state_dict(torch.load(cfg.cam_weights_name + '.pth', map_location=torch.device('cpu')), strict=True)
     model.eval()
     os.makedirs(cfg.cam_out_dir, exist_ok=True)
 

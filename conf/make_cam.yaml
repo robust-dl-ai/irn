@@ -8,4 +8,4 @@ cam_scales:
   - 2.0
 num_workers: 0
 cam_out_dir: ${hydra:runtime.cwd}/debug_outpus/irn/results/dev/cam/
-cam_weights_name: ${hydra:runtime.cwd}/models/irn/resnet50_cam
+cam_weights_name: ${hydra:runtime.cwd}/models/irn/res50_cam_original
