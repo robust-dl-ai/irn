@@ -110,7 +110,7 @@ def detect_instance(score_map, mask, class_id, max_fragment_size=0):
 def run_app(cfg: DictConfig) -> None:
     os.makedirs(cfg.ins_seg_out_dir, exist_ok=True)
     model = getattr(importlib.import_module(cfg.irn_network), 'EdgeDisplacement')()
-    model.load_state_dict(torch.load(cfg.irn_weights_name), strict=False)
+    model.load_state_dict(torch.load(cfg.irn_weights_name, map_location=torch.device('cpu')), strict=False)
     model.eval()
 
     dataset = dataloader.VOC12ClassificationDatasetMSF(cfg.infer_list,

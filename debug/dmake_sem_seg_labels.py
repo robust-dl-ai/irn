@@ -17,7 +17,7 @@ from irn.voc12 import dataloader
 def run_app(cfg: DictConfig) -> None:
     os.makedirs(cfg.sem_seg_out_dir, exist_ok=True)
     model = getattr(importlib.import_module(cfg.irn_network), 'EdgeDisplacement')()
-    model.load_state_dict(torch.load(cfg.irn_weights_name), strict=False)
+    model.load_state_dict(torch.load(cfg.irn_weights_name, map_location=torch.device('cpu')), strict=False)
     model.eval()
 
     dataset = dataloader.VOC12ClassificationDatasetMSF(cfg.infer_list,
