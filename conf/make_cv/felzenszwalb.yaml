@@ -1,0 +1,8 @@
+hydra:
+  run:
+    dir: ./outputs/cv_outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+chainer_eval_set: val
+voc12_root: ${hydra:runtime.cwd}/data/raw/VOCdevkit/VOC2012
+num_workers: 0
+out_dir: ${hydra:runtime.cwd}/data/preprocessed/cv/felzenszwalb/${chainer_eval_set}/
+cv_method: felzenszwalb

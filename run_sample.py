@@ -53,12 +53,12 @@ if __name__ == '__main__':
 
     # Output Path
     parser.add_argument("--log_name", default="sample_train_eval", type=str)
-    parser.add_argument("--cam_weights_name", default="sess/res50_cam.pth", type=str)
-    parser.add_argument("--irn_weights_name", default="sess/res50_irn.pth", type=str)
-    parser.add_argument("--cam_out_dir", default="result/cam", type=str)
-    parser.add_argument("--ir_label_out_dir", default="result/ir_label", type=str)
-    parser.add_argument("--sem_seg_out_dir", default="result/sem_seg", type=str)
-    parser.add_argument("--ins_seg_out_dir", default="result/ins_seg", type=str)
+    parser.add_argument("--cam_weights_name", default="models/irn/res50_cam_original", type=str)
+    parser.add_argument("--irn_weights_name", default="models/irn/res50_irn_original.pth", type=str)
+    parser.add_argument("--cam_out_dir", default="result/irnet/val/cam", type=str)
+    parser.add_argument("--ir_label_out_dir", default="result/irnet/val/ir_label", type=str)
+    parser.add_argument("--sem_seg_out_dir", default="result/irnet/val/sem_seg", type=str)
+    parser.add_argument("--ins_seg_out_dir", default="result/irnet/val/ins_seg", type=str)
 
     # Step
     parser.add_argument("--train_cam_pass", default=True)

@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+
 from irn.misc import torchutils
 from irn.net import resnet50
 
@@ -67,3 +68,22 @@ class CAM(Net):
         x = x[0] + x[1].flip(-1)
 
         return x
+
+
+if __name__ == '__main__':
+    model = CAM()
+    import torch
+
+    x = torch.rand([2, 3, 512, 512])
+    y = model.forward(x)
+    print(y.shape)
+    # 2, 2048, 32, 32
+    assert y.shape == (20, 32, 32)
+
+    model = Net()
+    import torch
+
+    x = torch.rand([2, 3, 512, 512])
+    y = model.forward(x)
+    print(y.shape)
+    assert y.shape == (2, 20)

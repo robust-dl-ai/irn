@@ -113,6 +113,7 @@ class GetAffinityLabelFromIndices():
                torch.from_numpy(neg_affinity_label)
 
 
+
 class VOC12ImageDataset(Dataset):
 
     def __init__(self, img_name_list_path, voc12_root,
@@ -284,3 +285,10 @@ class VOC12AffinityDataset(VOC12SegmentationDataset):
             reduced_label)
 
         return out
+
+
+if __name__ == '__main__':
+    for i in VOC12ClassificationDataset('./dev.txt', '../../data/raw/VOCdevkit/VOC2012/', resize_long=(320, 640),
+                                        hor_flip=True, crop_size=512, crop_method="random"):
+        print(i['img'].shape)
+        break
